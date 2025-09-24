@@ -99,7 +99,7 @@ class EvalVisitor(Visitor):
         if exp.identifier in env:
             return env[exp.identifier]
         else:
-            raise NameError(f"Variavel inexistente {exp.identifier}")
+            sys.exit("Def error")
     
     def visit_bln(self, exp, env):
         return env.get(exp.bln, exp.bln)
@@ -110,7 +110,7 @@ class EvalVisitor(Visitor):
     def visit_eql(self, exp, env):
         left = exp.left.accept(self, env)
         right = exp.right.accept(self, env)
-        if type(left) == type(1) and type(right) == type(1):
+        if (type(left) == type(1) or type(left) == type(True)) and type(right) == type(left):
             return left == right
         else:
             sys.exit("Type error")
@@ -159,46 +159,67 @@ class EvalVisitor(Visitor):
         left = exp.left.accept(self, env)
         right = exp.right.accept(self, env)
         if type(left) == type(1) and type(right) == type(1):
-            return left < right
+            return (left < right)
         else:
             sys.exit("Type error")
 
-    #TODO: terminar de implementat a verific de tipos nos outros visitor
-    # e deps olhar o resto do enunciado.
     def visit_neg(self, exp, env):
         value = exp.exp.accept(self, env)
-        return -value
+        if type(value) == type(1):
+            return -value
+        else:
+            sys.exit("Type error")
 
     def visit_not(self, exp, env):
         value = exp.exp.accept(self, env)
-        return not value
+        if type(value) == type(True):
+            return not value
+        else:
+            sys.exit("Type error")
 
     def visit_let(self, exp, env):
         value = exp.exp_def.accept(self, env)
+        if type(value) not in [type(1), type(True)]:
+            sys.exit("Type error")
         new_env = env.copy()
         new_env[exp.identifier] = value
         return exp.exp_body.accept(self, new_env)
     
     def visit_if(self, exp, env):
         cond = exp.cond.accept(self, env)
-        if cond:
-            return exp.then.accept(self, env)
+        if type(cond) != type(True):
+            sys.exit("Type error")
         else:
-            return exp.els.accept(self, env)
+            if cond:
+                return exp.then.accept(self, env)
+            else:
+                return exp.els.accept(self, env)
         
     def visit_or(self, exp, env):
         left = exp.left.accept(self, env)
-        if left:
-            return True
+        if type(left) != type(True):
+            sys.exit("Type error")
         else:
-            return exp.right.accept(self, env)
+            if left:
+                return True
+            else:
+                right = exp.right.accept(self, env)
+                if type(right) != type(True):
+                    sys.exit("Type error")
+                else:
+                    return right
 
     def visit_and(self, exp, env):
         left = exp.left.accept(self, env)
+        if type(left) != type(True):
+            sys.exit("Type error")
         if not left:
             return False
         else:
-            return exp.right.accept(self, env)
+            right = exp.right.accept(self, env)
+            if type(right) != type(True):
+                sys.exit("Type error")
+            return right
 
 class UseDefVisitor(Visitor):
     """

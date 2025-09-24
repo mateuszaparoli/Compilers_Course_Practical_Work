@@ -221,8 +221,8 @@ class Parser:
         >>> ev = EvalVisitor()
         >>> exp.accept(ev, None)
         2
+        
         """
-         
         exp = self.expression()
         return exp
 
@@ -243,11 +243,13 @@ class Parser:
         if token and token.kind.name == 'IFX':
             self.eat()
             cond = self.or_expr()
-            self.eat()
-            then = self.or_expr()
-            self.eat()
-            els = self.or_expr()
-            return self.if_else_expr(IfThenElse(cond, then, els))
+            if self.current_token() and self.current_token().kind.name == 'THN':
+                self.eat()
+                then = self.or_expr()
+                if self.current_token() and self.current_token().kind.name == 'ELS':
+                    self.eat()
+                    els = self.or_expr()
+                    return self.if_else_expr(IfThenElse(cond, then, els))
         return self.or_expr()
          
     def or_expr(self):
@@ -277,7 +279,7 @@ class Parser:
         return left        
 
     def comparison_expr(self):  
-        left = self.additive_expr()
+        left = self.less_expr()
         return self.comparison_rest(left)
 
     def comparison_rest(self, left):
@@ -374,8 +376,9 @@ class Parser:
         if token.kind.name == 'LPR':
             self.eat()
             exp = self.expression()
-            self.eat()
-            return exp
+            if self.current_token() and self.current_token().kind.name == 'RPR':
+                self.eat()
+                return exp
         elif token.kind.name == 'NUM':
             self.eat()
             return Num(int(token.text))
@@ -389,4 +392,4 @@ class Parser:
             self.eat()
             return Var(token.text)
         else:
-            raise ValueError(f"Unexpected token: {token.kind.name}")
+            sys.exit("Parse error")
