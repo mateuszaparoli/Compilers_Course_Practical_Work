@@ -242,14 +242,12 @@ class Parser:
         token = self.current_token()
         if token and token.kind.name == 'IFX':
             self.eat()
-            cond = self.or_expr()
-            if self.current_token() and self.current_token().kind.name == 'THN':
-                self.eat()
-                then = self.or_expr()
-                if self.current_token() and self.current_token().kind.name == 'ELS':
-                    self.eat()
-                    els = self.or_expr()
-                    return self.if_else_expr(IfThenElse(cond, then, els))
+            cond = self.if_else_expr()
+            self.eat()
+            then = self.if_else_expr()
+            self.eat()
+            els = self.if_else_expr()
+            return IfThenElse(cond, then, els)
         return self.or_expr()
          
     def or_expr(self):

@@ -1,0 +1,15 @@
+def parse_T(self):
+
+    token = self.current_token()
+    self.consume()
+    left = Num(token)
+
+    token = self.current_token()
+    if token and token.kind.name == 'ADD':
+        self.consume()
+        right = self.parse_T()
+        exp = Add(left, right)
+    else:
+        exp = left
+
+    return exp

@@ -566,7 +566,8 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        number = exp.arg.accept(self, type(1))
+        return number | {(type(1), type_var)}
 
     def visit_not(self, exp, type_var):
         """
@@ -577,7 +578,8 @@ class CtrGenVisitor(Visitor):
             ["(<class 'bool'>, 'TV_1')", "(<class 'bool'>, <class 'bool'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        arg = exp.arg.accept(self, type(True))
+        return arg | {(type(True), type_var)}
 
     def visit_let(self, exp, type_var):
         """
@@ -588,7 +590,10 @@ class CtrGenVisitor(Visitor):
             ["('TV_1', 'TV_2')", "('v', 'TV_2')", "(<class 'int'>, 'v')"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        K0 = exp.exp_def.accept(self, exp.identifier)
+        TV_2 = self.fresh_type_var()
+        K1 = exp.exp_body.accept(self, TV_2)
+        return K0 | K1 | {(TV_2, type_var)}
 
     def visit_ifThenElse(self, exp, type_var):
         """
@@ -599,4 +604,5 @@ class CtrGenVisitor(Visitor):
             ["('TV_1', 'TV_2')", "(<class 'bool'>, <class 'bool'>)", "(<class 'int'>, 'TV_2')"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        cond = exp.cond.accept(self, type(True))
+        

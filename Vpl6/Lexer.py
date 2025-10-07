@@ -166,14 +166,6 @@ class Lexer:
                 return Token(comment_text, TokenType.COM)
         elif current_char == ")":
             return Token(current_char, TokenType.RPR)
-        elif current_char == "t":
-            if self.source[self.position] == 'r' and self.source[self.position + 1] == 'u' and self.source[self.position + 2] == 'e':
-                self.position += 3
-                return Token('true', TokenType.TRU)
-        elif current_char == "f":
-            if self.source[self.position] == 'a' and self.source[self.position + 1] == 'l' and self.source[self.position + 2] == 's' and self.source[self.position + 3] == 'e':
-                self.position += 4
-                return Token('true', TokenType.FLS)
         elif current_char.isalpha():
             identifier_text = current_char
             while(self.position < self.length and self.source[self.position].isalnum()):
@@ -189,6 +181,10 @@ class Lexer:
                 return Token(identifier_text, TokenType.IFX)
             elif identifier_text == "then":
                 return Token(identifier_text, TokenType.THN)
+            elif identifier_text == "true":
+                return Token(identifier_text, TokenType.TRU)
+            elif identifier_text == "false":
+                return Token(identifier_text, TokenType.FLS)
             elif identifier_text == "else":
                 return Token(identifier_text, TokenType.ELS)
             elif identifier_text == "or":
