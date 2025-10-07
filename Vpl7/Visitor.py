@@ -441,9 +441,10 @@ class CtrGenVisitor(Visitor):
         """
         # TODO: Implement this method!
         # Acho que ta errado isso aqui, entender melhor e continuar daqui
-        left = exp.left.accept(self, type_var)
-        right = exp.right.accept(self, type_var)
-        return {(type(left), type(right))}
+        tv_1 = self.fresh_type_var()
+        left = exp.left.accept(self, tv_1)
+        right = exp.right.accept(self, tv_1)
+        return left | right | {(type(True), type_var)}
 
     def visit_and(self, exp, type_var):
         """
@@ -460,7 +461,9 @@ class CtrGenVisitor(Visitor):
         solve them.
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(True))
+        right = exp.right.accept(self, type(True))
+        return left | right | {(type(True), type_var)}
 
     def visit_or(self, exp, type_var):
         """
@@ -471,7 +474,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'bool'>, 'TV_1')", "(<class 'bool'>, <class 'bool'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(True))
+        right = exp.right.accept(self, type(True))
+        return left | right | {(type(True), type_var)}
 
     def visit_add(self, exp, type_var):
         """
@@ -482,7 +487,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
 
     def visit_sub(self, exp, type_var):
         """
@@ -493,7 +500,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.left.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
 
     def visit_mul(self, exp, type_var):
         """
@@ -504,7 +513,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
 
     def visit_div(self, exp, type_var):
         """
@@ -515,7 +526,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
 
     def visit_leq(self, exp, type_var):
         """
@@ -526,7 +539,9 @@ class CtrGenVisitor(Visitor):
             ["(<class 'bool'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
 
     def visit_lth(self, exp, type_var):
         """
@@ -537,7 +552,10 @@ class CtrGenVisitor(Visitor):
             ["(<class 'bool'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        raise NotImplementedError
+        left = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
+        return left | right | {(type(1), type_var)}
+
 
     def visit_neg(self, exp, type_var):
         """
