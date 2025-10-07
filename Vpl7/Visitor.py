@@ -605,4 +605,7 @@ class CtrGenVisitor(Visitor):
         """
         # TODO: Implement this method!
         cond = exp.cond.accept(self, type(True))
-        
+        TV_2 = self.fresh_type_var()
+        thn = exp.e0.accept(self, TV_2)
+        els = exp.e1.accept(self, TV_2)
+        return cond | thn | els | {(TV_2, type_var)}
