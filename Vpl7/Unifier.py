@@ -41,8 +41,26 @@ def unify(constraints, sets):
         >>> len(sets['b'])
         4
     """
-    # TODO: Implement this method!
-    raise NotImplementedError
+    def ensure(elem):
+        if elem not in sets:
+            s = set()
+            s.add(elem)
+            sets[elem] = s
+        return sets[elem]
+
+    for (a, b) in constraints:
+        sa = ensure(a)
+        sb = ensure(b)
+
+        if sa is sb:
+            continue
+
+        merged = sa.union(sb)
+
+        for member in merged:
+            sets[member] = merged
+
+    return sets
 
 
 
@@ -69,7 +87,26 @@ def name_sets(sets):
     """
 
     # TODO: Implement this method!
-    raise NotImplementedError
+    result = {}
+    for key, elems in sets.items():
+        concrete_types = []
+        for e in elems:
+            if isinstance(e, type):
+                if e not in concrete_types:
+                    concrete_types.append(e)
+
+        if len(concrete_types) == 0:
+            print('Type error')
+            sys.exit()
+
+        if len(concrete_types) > 1:
+            print('Type error')
+            sys.exit()
+
+        canonical = concrete_types[0]
+        result[key] = canonical
+
+    return result
 
 
 

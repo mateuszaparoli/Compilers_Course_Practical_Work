@@ -68,6 +68,10 @@ class Visitor(ABC):
         pass
     
     @abstractmethod
+    def visit_if(self, exp, arg):
+        pass
+    
+    @abstractmethod
     def visit_or(self, exp, arg):
         pass
 
@@ -191,9 +195,9 @@ class EvalVisitor(Visitor):
             sys.exit("Type error")
         else:
             if cond:
-                return exp.then.accept(self, env)
+                return exp.e0.accept(self, env)
             else:
-                return exp.els.accept(self, env)
+                return exp.e1.accept(self, env)
         
     def visit_or(self, exp, env):
         left = exp.left.accept(self, env)
@@ -313,8 +317,8 @@ class UseDefVisitor(Visitor):
 
     def visit_if(self, exp, defined):
         used_in_cond = exp.cond.accept(self, defined)
-        used_in_then = exp.then.accept(self, defined)
-        used_in_els = exp.els.accept(self, defined)
+        used_in_then = exp.e0.accept(self, defined)
+        used_in_els = exp.e1.accept(self, defined)
         return used_in_cond | used_in_then | used_in_els
     
     def visit_or(self, exp, defined):
@@ -501,7 +505,7 @@ class CtrGenVisitor(Visitor):
         """
         # TODO: Implement this method!
         left = exp.left.accept(self, type(1))
-        right = exp.left.accept(self, type(1))
+        right = exp.right.accept(self, type(1))
         return left | right | {(type(1), type_var)}
 
     def visit_mul(self, exp, type_var):
@@ -541,7 +545,7 @@ class CtrGenVisitor(Visitor):
         # TODO: Implement this method!
         left = exp.left.accept(self, type(1))
         right = exp.right.accept(self, type(1))
-        return left | right | {(type(1), type_var)}
+        return left | right | {(type(True), type_var)}
 
     def visit_lth(self, exp, type_var):
         """
@@ -554,7 +558,7 @@ class CtrGenVisitor(Visitor):
         # TODO: Implement this method!
         left = exp.left.accept(self, type(1))
         right = exp.right.accept(self, type(1))
-        return left | right | {(type(1), type_var)}
+        return left | right | {(type(True), type_var)}
 
 
     def visit_neg(self, exp, type_var):
@@ -566,7 +570,7 @@ class CtrGenVisitor(Visitor):
             ["(<class 'int'>, 'TV_1')", "(<class 'int'>, <class 'int'>)"]
         """
         # TODO: Implement this method!
-        number = exp.arg.accept(self, type(1))
+        number = exp.exp.accept(self, type(1))
         return number | {(type(1), type_var)}
 
     def visit_not(self, exp, type_var):
@@ -578,7 +582,7 @@ class CtrGenVisitor(Visitor):
             ["(<class 'bool'>, 'TV_1')", "(<class 'bool'>, <class 'bool'>)"]
         """
         # TODO: Implement this method!
-        arg = exp.arg.accept(self, type(True))
+        arg = exp.exp.accept(self, type(True))
         return arg | {(type(True), type_var)}
 
     def visit_let(self, exp, type_var):
@@ -595,7 +599,7 @@ class CtrGenVisitor(Visitor):
         K1 = exp.exp_body.accept(self, TV_2)
         return K0 | K1 | {(TV_2, type_var)}
 
-    def visit_ifThenElse(self, exp, type_var):
+    def visit_if(self, exp, type_var):
         """
         Example:
             >>> e = IfThenElse(Bln(True), Num(42), Num(30))

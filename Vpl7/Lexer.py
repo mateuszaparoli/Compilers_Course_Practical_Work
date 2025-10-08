@@ -1,7 +1,6 @@
 import sys
 import enum
 
-
 class Token:
     """
     This class contains the definition of Tokens. A token has two fields: its
@@ -32,17 +31,17 @@ class TokenType(enum.Enum):
     LET = 8   # The 'let' of the let expression
     INX = 9   # The 'in' of the let expression
     END = 10  # The 'end' of the let expression
-    EQL = 201 # x = y
-    ADD = 202 # x + y
-    SUB = 203 # x - y
-    MUL = 204 # x * y
-    DIV = 205 # x / y
-    LEQ = 206 # x <= y
-    LTH = 207 # x < y
-    NEG = 208 # ~x
-    NOT = 209 # not x
-    LPR = 210 # (
-    RPR = 211 # )
+    EQL = 201
+    ADD = 202
+    SUB = 203
+    MUL = 204
+    DIV = 205
+    LEQ = 206
+    LTH = 207
+    NEG = 208
+    NOT = 209
+    LPR = 210
+    RPR = 211
     ASN = 212 # The assignment '<-' operator
     ORX = 213 # x or y
     AND = 214 # x and y
@@ -59,23 +58,18 @@ class Lexer:
         scanned.
         TODO: You will need to implement this method.
         """
-        pass
+        self.source = source
+        self.position = 0
+        self.length = len(source)
 
     def tokens(self):
         """
         This method is a token generator: it converts the string encapsulated
-        into this object into a sequence of Tokens. Notice that this method
-        filters out three kinds of tokens: white-spaces, comments and new lines.
-
-        Examples:
+        into this object into a sequence of Tokens. Examples:
 
         >>> l = Lexer("1 + 3")
         >>> [tk.kind for tk in l.tokens()]
         [<TokenType.NUM: 3>, <TokenType.ADD: 202>, <TokenType.NUM: 3>]
-
-        >>> l = Lexer('1 * 2\\n')
-        >>> [tk.kind for tk in l.tokens()]
-        [<TokenType.NUM: 3>, <TokenType.MUL: 204>, <TokenType.NUM: 3>]
 
         >>> l = Lexer('1 * 2 -- 3\\n')
         >>> [tk.kind for tk in l.tokens()]
@@ -91,8 +85,7 @@ class Lexer:
         """
         token = self.getToken()
         while token.kind != TokenType.EOF:
-            if token.kind != TokenType.WSP and token.kind != TokenType.COM \
-                    and token.kind != TokenType.NLN:
+            if token.kind != TokenType.WSP and token.kind != TokenType.NLN:
                 yield token
             token = self.getToken()
 
@@ -173,14 +166,6 @@ class Lexer:
                 return Token(comment_text, TokenType.COM)
         elif current_char == ")":
             return Token(current_char, TokenType.RPR)
-        elif current_char == "t":
-            if self.source[self.position] == 'r' and self.source[self.position + 1] == 'u' and self.source[self.position + 2] == 'e':
-                self.position += 3
-                return Token('true', TokenType.TRU)
-        elif current_char == "f":
-            if self.source[self.position] == 'a' and self.source[self.position + 1] == 'l' and self.source[self.position + 2] == 's' and self.source[self.position + 3] == 'e':
-                self.position += 4
-                return Token('true', TokenType.FLS)
         elif current_char.isalpha():
             identifier_text = current_char
             while(self.position < self.length and self.source[self.position].isalnum()):
@@ -196,6 +181,10 @@ class Lexer:
                 return Token(identifier_text, TokenType.IFX)
             elif identifier_text == "then":
                 return Token(identifier_text, TokenType.THN)
+            elif identifier_text == "true":
+                return Token(identifier_text, TokenType.TRU)
+            elif identifier_text == "false":
+                return Token(identifier_text, TokenType.FLS)
             elif identifier_text == "else":
                 return Token(identifier_text, TokenType.ELS)
             elif identifier_text == "or":
@@ -205,4 +194,4 @@ class Lexer:
             else:
                 return Token(identifier_text, TokenType.VAR)
         else:
-            raise ValueError(f"Unexpected character: {current_char}")s
+            raise ValueError(f"Unexpected character: {current_char}")

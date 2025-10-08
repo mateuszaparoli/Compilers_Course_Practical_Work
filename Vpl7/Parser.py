@@ -233,7 +233,7 @@ class Parser:
         >>> exp.accept(ev, None)
         2
         """
-                exp = self.expression()
+        exp = self.expression()
         return exp
 
     def current_token(self):
@@ -259,7 +259,7 @@ class Parser:
                 if self.current_token() and self.current_token().kind.name == 'ELS':
                     self.eat()
                     els = self.or_expr()
-                    return self.if_else_expr(IfThenElse(cond, then, els))
+                    return IfThenElse(cond, then, els)
         return self.or_expr()
          
     def or_expr(self):
@@ -389,6 +389,8 @@ class Parser:
             if self.current_token() and self.current_token().kind.name == 'RPR':
                 self.eat()
                 return exp
+        elif token and token.kind.name == 'IFX':
+            return self.if_else_expr()
         elif token.kind.name == 'NUM':
             self.eat()
             return Num(int(token.text))
