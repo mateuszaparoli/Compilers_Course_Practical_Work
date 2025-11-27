@@ -57,7 +57,6 @@ class TokenType(enum.Enum):
     INT = 222  # The int type ('int')
     LGC = 223  # The boolean (logic) type ('bool')
 
-
 class Lexer:
     
     def __init__(self, source):
@@ -223,6 +222,9 @@ class Lexer:
                 if self._peek() == ">":
                     self._advance()
                     return Token("=>", TokenType.ARW)
+                if self._peek() == "=":
+                    self._advance()
+                    return Token("==", TokenType.EQL)
                 return Token("=", TokenType.EQL)
             if current_char == "~":
                 return Token("~", TokenType.NEG)

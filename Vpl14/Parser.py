@@ -222,7 +222,34 @@ class Parser:
         return expr
 
     def _parse_expression(self):
-        return self._parse_equality()
+        if self._current().kind == TokenType.IFX:
+            self._advance()
+            cond = self._parse_or()
+            self._expect(TokenType.THN)
+            e0 = self._parse_expression()
+            self._expect(TokenType.ELS)
+            e1 = self._parse_expression()
+            self._expect(TokenType.END)
+            return IfThenElse(cond, e0, e1)
+        if self._current().kind == TokenType.FNX:
+            return self._parse_lambda()
+        return self._parse_or()
+
+    def _parse_or(self):
+        left = self._parse_and()
+        while self._current().kind == TokenType.ORX:
+            self._advance()
+            right = self._parse_and()
+            left = Or(left, right)
+        return left
+
+    def _parse_and(self):
+        left = self._parse_equality()
+        while self._current().kind == TokenType.AND:
+            self._advance()
+            right = self._parse_equality()
+            left = And(left, right)
+        return left
 
     def _parse_let(self):
         self._expect(TokenType.LET)
@@ -233,6 +260,13 @@ class Parser:
         exp_body = self._parse_expression()
         self._expect(TokenType.END)
         return Let(identifier, exp_def, exp_body)
+
+    def _parse_lambda(self):
+        self._expect(TokenType.FNX)
+        formal = self._expect(TokenType.VAR).text
+        self._expect(TokenType.ARW)
+        body = self._parse_expression()
+        return Fn(formal, body)
 
     def _parse_equality(self):
         left = self._parse_comparison()
@@ -258,17 +292,30 @@ class Parser:
                 break
         return left
 
-    def _parse_additive(self):
+    def _parse_application(self):
         left = self._parse_multiplicative()
+        while self._is_application_start():
+            right = self._parse_multiplicative()
+            left = App(left, right)
+        return left
+
+    def _is_application_start(self):
+        token_kind = self._current().kind
+        return token_kind in [TokenType.NUM, TokenType.TRU, TokenType.FLS, 
+                             TokenType.VAR, TokenType.LPR, TokenType.LET, TokenType.FNX, 
+                             TokenType.NEG, TokenType.NOT]
+
+    def _parse_additive(self):
+        left = self._parse_application()
         while True:
             token_kind = self._current().kind
             if token_kind == TokenType.ADD:
                 self._advance()
-                right = self._parse_multiplicative()
+                right = self._parse_application()
                 left = Add(left, right)
             elif token_kind == TokenType.SUB:
                 self._advance()
-                right = self._parse_multiplicative()
+                right = self._parse_application()
                 left = Sub(left, right)
             else:
                 break
@@ -321,6 +368,10 @@ class Parser:
             return expr
         if token.kind == TokenType.LET:
             return self._parse_let()
+        if token.kind == TokenType.FNX:
+            return self._parse_lambda()
+        if token.kind == TokenType.IFX:
+            return self._parse_expression()
         self._error("Unexpected token")
 
     def _current(self):
