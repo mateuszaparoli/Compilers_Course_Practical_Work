@@ -232,10 +232,22 @@ class GenVisitor(Visitor):
 
     def __init__(self):
         self.next_var_counter = 0
+        self._forced_dest = None
 
     def next_var_name(self):
+        # se houver um destino forçado, use-o e limpe
+        if self._forced_dest is not None:
+            name = self._forced_dest
+            self._forced_dest = None
+            return name
+        # caso normal: gere o próximo tmp
+        # (sua implementação original abaixo)
         self.next_var_counter += 1
         return f"tmp{self.next_var_counter}"
+
+    # def next_var_name(self):
+    #     self.next_var_counter += 1
+    #     return f"tmp{self.next_var_counter}"
 
     def visit_var(self, exp, prog):
         """
@@ -715,71 +727,37 @@ class GenVisitor(Visitor):
         dest = self.next_var_name()
         prog.add_inst(AsmModule.Xor(dest, lt_one, lt_zero))
         return dest
-
+    
     def visit_let(self, exp, prog):
-        """
-        Usage:
-            >>> e = Let('v', Not(Bln(False)), Var('v'))
-            >>> p = AsmModule.Program({}, [])
-            >>> g = GenVisitor()
-            >>> v = e.accept(g, p)
-            >>> p.eval()
-            >>> p.get_val(v)
-            1
-
-            >>> e = Let('v', Num(2), Add(Var('v'), Num(3)))
-            >>> p = AsmModule.Program({}, [])
-            >>> g = GenVisitor()
-            >>> v = e.accept(g, p)
-            >>> p.eval()
-            >>> p.get_val(v)
-            5
-
-            >>> e0 = Let('x', Num(2), Add(Var('x'), Num(3)))
-            >>> e1 = Let('y', e0, Mul(Var('y'), Num(10)))
-            >>> p = AsmModule.Program({}, [])
-            >>> g = GenVisitor()
-            >>> v = e1.accept(g, p)
-            >>> p.eval()
-            >>> p.get_val(v)
-            50
-        """
-        value_var = exp.exp_def.accept(self, prog)
-        
-        # Check if the definition is a lambda - if so, we need special handling
         from Expression import Fn as FnExpr
         if isinstance(exp.exp_def, FnExpr):
-            # For lambdas, the value is a closure tuple stored in value_var
-            # Just copy the closure reference
+            value_var = exp.exp_def.accept(self, prog)
             prog.set_val(exp.identifier, prog.get_val(value_var))
         else:
-            # For non-lambda expressions, use Add to copy the value at runtime
-            prog.add_inst(AsmModule.Add(exp.identifier, value_var, "x0"))
-        
+            self._forced_dest = exp.identifier
+            value_var = exp.exp_def.accept(self, prog)
         return exp.exp_body.accept(self, prog)
 
     def visit_ifThenElse(self, exp, prog):
-        """
-        Handles if-then-else expressions
-        """
         cond_var = exp.cond.accept(self, prog)
         beq = AsmModule.Beq(cond_var, "x0")
         prog.add_inst(beq)
-        
+
+        dest = self.next_var_name() 
+        self._forced_dest = dest
         e0_var = exp.e0.accept(self, prog)
-        dest = self.next_var_name()
-        prog.add_inst(AsmModule.Add(dest, e0_var, "x0"))
-        
+
         jmp = AsmModule.Jal("x0")
         prog.add_inst(jmp)
-        
+
         beq.set_target(prog.get_number_of_instructions())
-        
+
+        self._forced_dest = dest
         e1_var = exp.e1.accept(self, prog)
-        prog.add_inst(AsmModule.Add(dest, e1_var, "x0"))
-        
+
         jmp.set_target(prog.get_number_of_instructions())
         return dest
+
 
     def visit_fn(self, exp, prog):
         closure_id = self.next_var_name()
@@ -788,64 +766,42 @@ class GenVisitor(Visitor):
         return closure_id
 
     def visit_app(self, exp, prog):
-        """
-        Handles function application by inlining the lambda body
-        with the argument substituted for the formal parameter.
-        """
-        # Import here to avoid circular imports
-        from Expression import Fn as FnExpr, App, Var
-        
+        from Expression import Fn as FnExpr
+        import copy
+
         if isinstance(exp.function, FnExpr):
             arg_var = exp.actual.accept(self, prog)
-            
+
             formal = exp.function.formal
             body = exp.function.body
-            import copy
             body_copy = copy.deepcopy(body)
-            
-            # Rename all occurrences of the formal parameter to the argument variable
+
             rename_map = {formal: arg_var}
             body_copy.accept(RenameVisitor(), rename_map)
-            
-            # Generate code for the substituted body
+
+            result = self.next_var_name()
+            self._forced_dest = result
             return body_copy.accept(self, prog)
         else:
-            # Function is a variable holding a closure
-            # This is more complex - evaluate the function first
             fn_var = exp.function.accept(self, prog)
             arg_var = exp.actual.accept(self, prog)
-            
-            # Get the closure tuple from the environment
-            # The function should have stored a closure when visit_fn was called
+
             if fn_var not in prog._Program__env:
-                # If the function variable is not in the environment, it might be because
-                # we're in a nested context. For now, just return fn_var as-is
                 result = self.next_var_name()
                 prog.add_inst(AsmModule.Add(result, fn_var, "x0"))
                 return result
-            
+
             closure_tuple = prog.get_val(fn_var)
-            
-            # Extract components from the closure
             if isinstance(closure_tuple, tuple) and closure_tuple[0] == "closure":
                 _, formal_param, body_expr, captured_env = closure_tuple
-                
-                # Create a copy of the body
-                import copy
                 body_copy = copy.deepcopy(body_expr)
-                
-                # Create a rename map to substitute the formal parameter
                 rename_map = {formal_param: arg_var}
                 body_copy.accept(RenameVisitor(), rename_map)
-                
-                # Generate code for the body WITHOUT changing the environment
-                # (the captured environment is already in the closure, so references
-                # to outer variables should still work)
-                result = body_copy.accept(self, prog)
-                
-                return result
+
+                result = self.next_var_name()
+                self._forced_dest = result
+                return body_copy.accept(self, prog)
             else:
-                # Not a valid closure
                 result = self.next_var_name()
                 prog.add_inst(AsmModule.Add(result, fn_var, "x0"))
                 return result

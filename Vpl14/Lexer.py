@@ -198,7 +198,6 @@ class Lexer:
                 return Token(text, token_kind)
 
             current_char = self._advance()
-
             if current_char == "+":
                 return Token("+", TokenType.ADD)
             if current_char == "-":
@@ -234,5 +233,4 @@ class Lexer:
                 return Token("(", TokenType.LPR)
             if current_char == ")":
                 return Token(")", TokenType.RPR)
-
             raise ValueError(f"Unexpected character: {current_char}")

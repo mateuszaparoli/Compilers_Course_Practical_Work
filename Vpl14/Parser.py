@@ -229,7 +229,6 @@ class Parser:
             e0 = self._parse_expression()
             self._expect(TokenType.ELS)
             e1 = self._parse_expression()
-            self._expect(TokenType.END)
             return IfThenElse(cond, e0, e1)
         if self._current().kind == TokenType.FNX:
             return self._parse_lambda()
@@ -341,6 +340,9 @@ class Parser:
         token_kind = self._current().kind
         if token_kind == TokenType.NEG:
             self._advance()
+            token_kind = self._current().kind
+            if token_kind == TokenType.IFX:
+                self._error()
             return Neg(self._parse_unary())
         if token_kind == TokenType.NOT:
             self._advance()
@@ -372,7 +374,7 @@ class Parser:
             return self._parse_lambda()
         if token.kind == TokenType.IFX:
             return self._parse_expression()
-        self._error("Unexpected token")
+        self._error()
 
     def _current(self):
         return self.tokens[self.cur_token_idx]
@@ -384,9 +386,9 @@ class Parser:
     def _expect(self, token_type):
         token = self._current()
         if token.kind != token_type:
-            self._error(f"Expected {token_type.name}")
+            self._error()
         self._advance()
         return token
 
-    def _error(self, message):
-        sys.exit(f"Parse error: {message}")
+    def _error(self):
+        sys.exit(f"Parse error")
